@@ -19,7 +19,7 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip install pandas camelot-py
+        pip install pandas camelot-py opencv-python ghostscript
 
     - name: Install System dependencies
       run: |
