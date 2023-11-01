@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vanilla JS Finance Tracker</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+</head>
+<body>
+  <div class="container">
+    <div class="field">
+      <label class="label" for="updateFromInput">Update From</label>
+      <div class="control">
+        <input class="input" type="date" id="updateFromInput">
+      </div>
+    </div>
+    <div class="field">
+      <label class="label" for="updateToInput">Update To</label>
+      <div class="control">
+        <input class="input" type="date" id="updateToInput">
+      </div>
+    </div>
+    <div class="field">
+      <label class="label" for="descriptionInput">Description</label>
+      <div class="control">
+        <input class="input" type="text" id="descriptionInput">
+      </div>
+    </div>
+    <div class="field">
+      <label class="label" for="amountInput">Amount (USD)</label>
+      <div class="control">
+        <input class="input" type="number" id="amountInput">
+      </div>
+    </div>
+    <div class="field">
+      <div class="control">
+        <button class="button is-primary" id="addEntryButton">Add Entry</button>
+      </div>
+    </div>
+    <table class="table is-fullwidth is-striped">
+      <thead>
+        <tr>
+          <th>Update From</th>
+          <th>Description</th>
+          <th>Amount (USD)</th>
+          <th>Updated Amount</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="entriesTableBody">
+        <tr>
+          <td colspan="2"><strong>Total</strong></td>
+          <td><strong id="totalAmount">0.00</strong></td>
+          <td><strong id="totalUpdatedAmount">0.00</strong></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    let entries = [];
+    let updateFromInput = document.getElementById('updateFromInput');
+    let updateToInput = document.getElementById('updateToInput');
+    let descriptionInput = document.getElementById('descriptionInput');
+    let amountInput = document.getElementById('amountInput');
+    let addEntryButton = document.getElementById('addEntryButton');
+    let entriesTableBody = document.getElementById('entriesTableBody');
+    let totalAmountDisplay = document.getElementById('totalAmount');
+    let totalUpdatedAmountDisplay = document.getElementById('totalUpdatedAmount');
+
+    addEntryButton.addEventListener('click', addEntry);
+
+    function addEntry() {
+      let updateFrom = updateFromInput.value;
+      let updateTo = updateToInput.value;
+      let description = descriptionInput.value;
+      let amount = parseFloat(amountInput.value);
+      let factorFrom = fetchFactor(updateFrom);
+      let factorTo = fetchFactor(updateTo);
+      let updatedAmount = (amount * factorFrom) / factorTo;
+      entries.push({ updateFrom, description, amount, updatedAmount });
+      updateTable();
+      descriptionInput.value = '';
+      amountInput.value = '';
+    }
+
+    function deleteEntry(index) {
+      entries.splice(index, 1);
+      updateTable();
+    }
+
+    function fetchFactor(date) {
+      return 1.1;
+    }
+
+    function updateTable() {
+      let totalAmount = 0;
+      let totalUpdatedAmount = 0;
+      entriesTableBody.innerHTML = entries.map((entry, index) => {
+        totalAmount += entry.amount;
+        totalUpdatedAmount += entry.updatedAmount;
+        return `
+          <tr>
+            <td>${entry.updateFrom}</td>
+            <td>${entry.description}</td>
+            <td>${entry.amount.toFixed(2)}</td>
+            <td>${entry.updatedAmount.toFixed(2)}</td>
+            <td>
+              <button class="button is-danger" onclick="deleteEntry(${index})">Delete</button>
+            </td>
+          </tr>
+        `;
+      }).join('') + `
+        <tr>
+          <td colspan="2"><strong>Total</strong></td>
+          <td><strong>${totalAmount.toFixed(2)}</strong></td>
+          <td><strong>${totalUpdatedAmount.toFixed(2)}</strong></td>
+          <td></td>
+        </tr>
+      `;
+      totalAmountDisplay.textContent = totalAmount.toFixed(2);
+      totalUpdatedAmountDisplay.textContent = totalUpdatedAmount.toFixed(2);
+    }
+  </script>
+</body>
+</html>
