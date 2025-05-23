@@ -27,7 +27,11 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip install pandas camelot-py opencv-python ghostscript requests
+        pip install -r requirements.txt
+
+    - name: Run Pytest tests
+      run: |
+        pytest tests/
 
     - name: Install System dependencies
       run: |

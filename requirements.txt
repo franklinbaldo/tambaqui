@@ -2,3 +2,5 @@ pandas==2.2.3
 camelot-py[cv]==1.0.0
 opencv-python==4.11.0.86
 ghostscript
+pytest==8.3.5
+pytest-mock
