@@ -17,6 +17,14 @@ jobs:
       with:
         python-version: 3.9
 
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
     - name: Install Python dependencies
       run: |
         pip install pandas camelot-py opencv-python ghostscript
@@ -34,7 +42,6 @@ jobs:
       run: |
         git config user.name 'GitHub Actions'
         git config user.email 'actions@github.com'
-        git add *
-        git commit -m "GitHub Actions $(date +'%Y-%m-%d')"
+        git add tabela_de_atualizacao_ec113.json tabela_de_atualizacao_ec113.csv
+        git diff --staged --quiet || git commit -m "Automated update of EC113 tables"
         git push
-

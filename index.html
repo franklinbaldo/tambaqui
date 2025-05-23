@@ -114,9 +114,25 @@
       }
 
       async function fetchFactor(date) {
-        // Placeholder for fetching data based on date.
-        // In a real-world application, this should make an asynchronous request.
-        return Promise.resolve(1.1);
+        // Extract YYYY-MM from the input date string
+        const yearMonth = date.substring(0, 7); // Extracts "YYYY-MM"
+
+        try {
+          const response = await fetch('tabela_de_atualizacao_ec113.json');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+
+          if (data[yearMonth] && data[yearMonth].Fator) {
+            return parseFloat(data[yearMonth].Fator);
+          } else {
+            throw new Error(`Factor not found for date: ${yearMonth}`);
+          }
+        } catch (error) {
+          console.error('Error fetching or parsing factor data:', error);
+          throw error; // Re-throw the error to be caught by the caller
+        }
       }
 
       function updateTable() {
