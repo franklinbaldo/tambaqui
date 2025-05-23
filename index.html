@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://cdn.jsdelivr.net">
   <title>Vanilla JS Finance Tracker</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     .is-hidden { display: none; }
   </style>
@@ -65,108 +66,12 @@
         </tr>
       </tbody>
     </table>
+
+    <div class="box" style="margin-top: 20px;">
+      <canvas id="factorTrendChart"></canvas>
+    </div>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const entries = [];
-      const updateFromInput = document.getElementById('updateFromInput');
-      const updateToInput = document.getElementById('updateToInput');
-      const descriptionInput = document.getElementById('descriptionInput');
-      const amountInput = document.getElementById('amountInput');
-      const addEntryButton = document.getElementById('addEntryButton');
-      const entriesTableBody = document.getElementById('entriesTableBody');
-      const totalAmountDisplay = document.getElementById('totalAmount');
-      const totalUpdatedAmountDisplay = document.getElementById('totalUpdatedAmount');
-      const errorMessage = document.getElementById('errorMessage');
-      const emptyState = document.getElementById('emptyState');
-
-      addEntryButton.addEventListener('click', async () => {
-        try {
-          const updateFrom = updateFromInput.value;
-          const updateTo = updateToInput.value;
-          const description = descriptionInput.value;
-          const amount = parseFloat(amountInput.value);
-          
-          if (!updateFrom || !updateTo || !description || isNaN(amount) || amount <= 0) {
-            throw new Error('Invalid input');
-          }
-
-          errorMessage.classList.add('is-hidden');
-
-          const factorFrom = await fetchFactor(updateFrom);
-          const factorTo = await fetchFactor(updateTo);
-          const updatedAmount = (amount * factorFrom) / factorTo;
-
-          entries.push({ updateFrom, description, amount, updatedAmount });
-          updateTable();
-
-          descriptionInput.value = '';
-          amountInput.value = '';
-        } catch (error) {
-          errorMessage.classList.remove('is-hidden');
-        }
-      });
-
-      function deleteEntry(index) {
-        entries.splice(index, 1);
-        updateTable();
-      }
-
-      async function fetchFactor(date) {
-        // Extract YYYY-MM from the input date string
-        const yearMonth = date.substring(0, 7); // Extracts "YYYY-MM"
-
-        try {
-          const response = await fetch('tabela_de_atualizacao_ec113.json');
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          const data = await response.json();
-
-          if (data[yearMonth] && data[yearMonth].Fator) {
-            return parseFloat(data[yearMonth].Fator);
-          } else {
-            throw new Error(`Factor not found for date: ${yearMonth}`);
-          }
-        } catch (error) {
-          console.error('Error fetching or parsing factor data:', error);
-          throw error; // Re-throw the error to be caught by the caller
-        }
-      }
-
-      function updateTable() {
-        let totalAmount = 0;
-        let totalUpdatedAmount = 0;
-        entriesTableBody.innerHTML = entries.map((entry, index) => {
-          totalAmount += entry.amount;
-          totalUpdatedAmount += entry.updatedAmount;
-          return `
-            <tr>
-              <td>${entry.updateFrom}</td>
-              <td>${entry.description}</td>
-              <td>${entry.amount.toFixed(2)}</td>
-              <td>${entry.updatedAmount.toFixed(2)}</td>
-              <td>
-                <button class="button is-danger" onclick="deleteEntry(${index})">Delete</button>
-              </td>
-            </tr>
-          `;
-        }).join('') + `
-          <tr>
-            <td colspan="2"><strong>Total</strong></td>
-            <td><strong>${totalAmount.toFixed(2)}</strong></td>
-            <td><strong>${totalUpdatedAmount.toFixed(2)}</strong></td>
-            <td></td>
-          </tr>
-        `;
-        totalAmountDisplay.textContent = totalAmount.toFixed(2);
-        totalUpdatedAmountDisplay.textContent = totalUpdatedAmount.toFixed(2);
-        emptyState.style.display = entries.length > 0 ? 'none' : 'table-row';
-      }
-
-      window.deleteEntry = deleteEntry;
-    });
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
