@@ -29,8 +29,8 @@ def process_table(table_df, meses_dict):
     except Exception as e:
         print(f"Warning: Error setting headers in process_table, possibly malformed input. Error: {e}")
         return pd.DataFrame(columns=['Ano-Mês', 'Fator']).set_index('Ano-Mês')
-        
-    
+
+
     # Ensure the first column (expected to be month indicators) is named for melting
     if len(df.columns) > 0:
         month_indicator_col = df.columns[0]
@@ -40,7 +40,7 @@ def process_table(table_df, meses_dict):
 
     df = pd.melt(df, id_vars=[month_indicator_col], var_name='Ano', value_name='Fator') # Renamed var_name to 'Ano' for clarity
     df.columns = ['Mês', 'Ano', 'Fator'] # Ensure correct column names after melt
-    
+
     df["Ano"] = df["Ano"].astype(str).str.replace(" ", '', regex=False) # Convert Ano to string before replace
     df['Fator'] = pd.to_numeric(df['Fator'].astype(str).str.replace('.', '', regex=False).str.replace(',', '.', regex=False), errors='coerce')
     df = df.dropna().reset_index(drop=True)
@@ -105,20 +105,20 @@ def process_and_concatenate_tables(tables_list):
     """Processes list of Camelot tables and concatenates them."""
     if not tables_list:
         return pd.DataFrame() # Return empty DataFrame if no tables
-    
+
     processed_dfs = []
     for i, table_obj in enumerate(tables_list):
         print(f"Processing table {i+1}/{len(tables_list)}")
         try:
             # Pass the DataFrame from the table object and the global meses dict
-            df = process_table(table_obj.df, meses) 
+            df = process_table(table_obj.df, meses)
             if not df.empty: # Only append if processing didn't result in an empty df (e.g. from errors)
                 processed_dfs.append(df)
         except Exception as e:
             print(f"Error processing table object's DataFrame {i+1}: {type(e).__name__} - {e}")
             # Optionally, decide if one bad table should stop all processing
             # For now, we skip bad tables.
-    
+
     if not processed_dfs:
         print("No tables were successfully processed.")
         return pd.DataFrame()
@@ -138,7 +138,7 @@ def save_dataframes(df, json_path, csv_path):
     if df.empty:
         print("DataFrame is empty, skipping save operations.")
         return False # Indicate failure or that nothing was saved
-    
+
     print("Attempting to save data...")
     try:
         df.to_json(json_path, indent=2)
@@ -184,9 +184,9 @@ def main():
     if final_dataframe.empty:
         print("Exiting because the final DataFrame is empty after processing.")
         sys.exit(1)
-    
+
     save_successful = save_dataframes(final_dataframe, OUTPUT_JSON, OUTPUT_CSV)
-    
+
     if save_successful:
         store_last_modified_to_file(LAST_MODIFIED_FILE, current_server_lm)
         print("Script finished successfully.")

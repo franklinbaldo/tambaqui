@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
             errorMessage.textContent = "Please enter a valid positive amount.";
             throw new Error('Input validation failed');
           }
-          
+
           // If validation passes, ensure error message is hidden before fetching
           errorMessage.classList.add('is-hidden');
 
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Could not find canvas element for chart.');
             return;
           }
-          
+
           new Chart(ctx, {
             type: 'line',
             data: {
