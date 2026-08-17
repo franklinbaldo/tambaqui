@@ -37,5 +37,12 @@ jobs:
           assert "fetch('tabela_de_atualizacao_ec113.json')" in html, 'surface must load the versioned EC113 dataset'
           assert 'role="alert"' in html, 'calculation/data errors need an announced state'
           assert "script-src 'self' 'unsafe-inline'" in html, 'CSP must permit the current inline script architecture'
-          print(f'validated {len(factors)} EC113 factors and public surface contract')
+          assert 'https://www.tjsp.jus.br/Download/Tabelas/TabelaEmendaConstitucional113-2021.pdf' in html, 'upstream TJSP source must be recoverable from the surface'
+          assert 'href="tabela_de_atualizacao_ec113.json"' in html, 'the exact public JSON dataset must be recoverable from the surface'
+          assert 'id="factorCoverage"' in html, 'surface must expose the dataset coverage region'
+          assert 'Object.keys(factors).sort()' in html, 'factor coverage must be derived from the loaded dataset'
+          assert 'time.dateTime = month' in html, 'displayed factor coverage must expose machine-readable YYYY-MM values'
+          assert min(factors) == '1964-10', 'unexpected first factor month'
+          assert max(factors) == '2023-10', 'unexpected last factor month; verify upstream refresh before changing this assertion'
+          print(f'validated {len(factors)} EC113 factors ({min(factors)}..{max(factors)}) and public surface contract')
           PY
