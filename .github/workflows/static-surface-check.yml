@@ -46,3 +46,62 @@ jobs:
           assert max(factors) == '2023-10', 'unexpected last factor month; verify upstream refresh before changing this assertion'
           print(f'validated {len(factors)} EC113 factors ({min(factors)}..{max(factors)}) and public surface contract')
           PY
+
+  browser-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Chromium driver
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture valid and missing-factor states
+        run: |
+          python -m http.server 4173 >/tmp/tambaqui-http.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID' EXIT
+          node <<'JS'
+          const { chromium } = require('playwright');
+          const fs = require('fs');
+
+          (async () => {
+            fs.mkdirSync('artifacts/browser-proof', { recursive: true });
+            const browser = await chromium.launch();
+            const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+            await page.goto('http://127.0.0.1:4173/', { waitUntil: 'networkidle' });
+            await page.locator('#factorCoverage time').first().waitFor();
+
+            await page.locator('#updateFromInput').fill('2023-10-01');
+            await page.locator('#updateToInput').fill('2023-10-15');
+            await page.locator('#descriptionInput').fill('Prova de superfície');
+            await page.locator('#amountInput').fill('100');
+            await page.locator('#addEntryButton').click();
+            await page.getByText('Prova de superfície').waitFor();
+            if (await page.locator('#errorMessage').isVisible()) throw new Error('valid factor state unexpectedly showed an error');
+            await page.screenshot({ path: 'artifacts/browser-proof/valid-calculation.png', fullPage: true });
+
+            await page.locator('#updateFromInput').fill('2024-01-01');
+            await page.locator('#updateToInput').fill('2024-01-15');
+            await page.locator('#descriptionInput').fill('Fator ausente');
+            await page.locator('#amountInput').fill('100');
+            await page.locator('#addEntryButton').click();
+            const error = page.locator('#errorMessage');
+            await error.waitFor({ state: 'visible' });
+            if (!(await error.textContent()).includes('Não há fator disponível para 2024-01')) throw new Error('missing-factor state did not expose the expected error');
+            await page.screenshot({ path: 'artifacts/browser-proof/missing-factor.png', fullPage: true });
+
+            await browser.close();
+          })();
+          JS
+      - name: Upload browser proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: tambaqui-browser-proof
+          path: artifacts/browser-proof/*.png
+          if-no-files-found: error
