@@ -1,0 +1,41 @@
+name: Static surface check
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'tabela_de_atualizacao_ec113.json'
+      - '.github/workflows/static-surface-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'tabela_de_atualizacao_ec113.json'
+      - '.github/workflows/static-surface-check.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate static surface boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          html = Path('index.html').read_text(encoding='utf-8')
+          payload = json.loads(Path('tabela_de_atualizacao_ec113.json').read_text(encoding='utf-8'))
+          factors = payload.get('Fator')
+
+          assert isinstance(factors, dict) and factors, 'dataset must expose a non-empty Fator mapping'
+          assert all(len(key) == 7 and key[4] == '-' for key in factors), 'factor keys must use YYYY-MM'
+          assert 'Promise.resolve(1.1)' not in html, 'public calculator must not use the placeholder factor'
+          assert "fetch('tabela_de_atualizacao_ec113.json')" in html, 'surface must load the versioned EC113 dataset'
+          assert 'role="alert"' in html, 'calculation/data errors need an announced state'
+          assert "script-src 'self' 'unsafe-inline'" in html, 'CSP must permit the current inline script architecture'
+          print(f'validated {len(factors)} EC113 factors and public surface contract')
+          PY
