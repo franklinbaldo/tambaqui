@@ -1,75 +1,100 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
-  <title>Vanilla JS Finance Tracker</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.3/css/bulma.min.css">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'">
+  <title>Atualização monetária — EC 113/2021</title>
   <style>
+    :root { font-family: system-ui, sans-serif; color: #161616; background: #f7f5ef; }
+    body { margin: 0; }
+    main { width: min(70rem, calc(100% - 2rem)); margin: 0 auto; padding: 2.5rem 0 4rem; }
+    header { max-width: 48rem; margin-bottom: 2rem; }
+    h1 { margin-bottom: .5rem; }
+    .context { color: #4d4d4d; line-height: 1.5; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; align-items: end; }
+    label { display: block; font-weight: 700; margin-bottom: .35rem; }
+    input, button { box-sizing: border-box; min-height: 2.75rem; width: 100%; font: inherit; }
+    input { padding: .55rem .65rem; border: 1px solid #777; background: #fff; }
+    button { border: 0; padding: .65rem 1rem; font-weight: 700; cursor: pointer; background: #1f5b4c; color: #fff; }
+    button.danger { background: #8f2f28; }
+    input:focus-visible, button:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+    .message { margin: 1rem 0; padding: .75rem 1rem; border-left: .35rem solid #8f2f28; background: #fff; }
     .is-hidden { display: none; }
+    .table-wrap { overflow-x: auto; margin-top: 2rem; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { padding: .7rem; border-bottom: 1px solid #d8d4ca; text-align: left; vertical-align: top; }
+    th { background: #ebe7dd; }
+    tfoot td { font-weight: 700; }
+    .number { text-align: right; font-variant-numeric: tabular-nums; }
+    .source { margin-top: 1rem; color: #555; font-size: .925rem; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="field">
-      <label class="label" id="updateFromLabel">Update From</label>
-      <div class="control">
-        <input class="input" type="date" id="updateFromInput" aria-labelledby="updateFromLabel">
+  <main>
+    <header>
+      <h1>Atualização monetária — EC 113/2021</h1>
+      <p class="context">Calculadora baseada na tabela de atualização monetária mantida neste repositório a partir da publicação do Tribunal de Justiça de São Paulo (TJSP). O cálculo usa o fator correspondente ao mês de cada data informada.</p>
+    </header>
+
+    <section aria-labelledby="calculo-heading">
+      <h2 id="calculo-heading">Novo cálculo</h2>
+      <div class="grid">
+        <div>
+          <label for="updateFromInput">Atualizar desde</label>
+          <input type="date" id="updateFromInput">
+        </div>
+        <div>
+          <label for="updateToInput">Atualizar até</label>
+          <input type="date" id="updateToInput">
+        </div>
+        <div>
+          <label for="descriptionInput">Descrição</label>
+          <input type="text" id="descriptionInput">
+        </div>
+        <div>
+          <label for="amountInput">Valor (R$)</label>
+          <input type="number" id="amountInput" min="0" step="0.01" inputmode="decimal">
+        </div>
+        <div>
+          <button type="button" id="addEntryButton">Adicionar cálculo</button>
+        </div>
       </div>
+      <div id="errorMessage" class="message is-hidden" role="alert"></div>
+    </section>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Data inicial</th>
+            <th>Descrição</th>
+            <th class="number">Valor original</th>
+            <th class="number">Valor atualizado</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody id="entriesTableBody">
+          <tr id="emptyState"><td colspan="5">Nenhum cálculo adicionado.</td></tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2">Total</td>
+            <td class="number" id="totalAmount">R$ 0,00</td>
+            <td class="number" id="totalUpdatedAmount">R$ 0,00</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
-    <div class="field">
-      <label class="label" id="updateToLabel">Update To</label>
-      <div class="control">
-        <input class="input" type="date" id="updateToInput" aria-labelledby="updateToLabel">
-      </div>
-    </div>
-    <div class="field">
-      <label class="label" id="descriptionLabel">Description</label>
-      <div class="control">
-        <input class="input" type="text" id="descriptionInput" aria-labelledby="descriptionLabel">
-      </div>
-    </div>
-    <div class="field">
-      <label class="label" id="amountLabel">Amount (USD)</label>
-      <div class="control">
-        <input class="input" type="number" id="amountInput" aria-labelledby="amountLabel">
-      </div>
-    </div>
-    <div class="field">
-      <div class="control">
-        <button class="button is-primary" id="addEntryButton">Add Entry</button>
-      </div>
-    </div>
-    <div id="errorMessage" class="is-hidden">Please fill out all fields correctly.</div>
-    <table class="table is-fullwidth is-striped">
-      <thead>
-        <tr>
-          <th>Update From</th>
-          <th>Description</th>
-          <th>Amount (USD)</th>
-          <th>Updated Amount</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="entriesTableBody">
-        <tr id="emptyState">
-          <td colspan="5">No entries found.</td>
-        </tr>
-        <tr>
-          <td colspan="2"><strong>Total</strong></td>
-          <td><strong id="totalAmount">0.00</strong></td>
-          <td><strong id="totalUpdatedAmount">0.00</strong></td>
-          <td></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+    <p class="source">Fonte dos fatores: <code>tabela_de_atualizacao_ec113.json</code>, gerada a partir da tabela EC 113/2021 do TJSP. A disponibilidade do arquivo não comprova, por si só, que a automação diária esteja executando atualmente.</p>
+  </main>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const entries = [];
+      let factorsPromise;
       const updateFromInput = document.getElementById('updateFromInput');
       const updateToInput = document.getElementById('updateToInput');
       const descriptionInput = document.getElementById('descriptionInput');
@@ -79,77 +104,108 @@
       const totalAmountDisplay = document.getElementById('totalAmount');
       const totalUpdatedAmountDisplay = document.getElementById('totalUpdatedAmount');
       const errorMessage = document.getElementById('errorMessage');
-      const emptyState = document.getElementById('emptyState');
+      const currency = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
       addEntryButton.addEventListener('click', async () => {
         try {
           const updateFrom = updateFromInput.value;
           const updateTo = updateToInput.value;
-          const description = descriptionInput.value;
-          const amount = parseFloat(amountInput.value);
-          
-          if (!updateFrom || !updateTo || !description || isNaN(amount) || amount <= 0) {
-            throw new Error('Invalid input');
+          const description = descriptionInput.value.trim();
+          const amount = Number.parseFloat(amountInput.value);
+
+          if (!updateFrom || !updateTo || !description || !Number.isFinite(amount) || amount <= 0) {
+            throw new Error('Preencha as duas datas, a descrição e um valor maior que zero.');
+          }
+          if (updateFrom > updateTo) {
+            throw new Error('A data inicial não pode ser posterior à data final.');
           }
 
-          errorMessage.classList.add('is-hidden');
-
+          hideError();
           const factorFrom = await fetchFactor(updateFrom);
           const factorTo = await fetchFactor(updateTo);
           const updatedAmount = (amount * factorFrom) / factorTo;
 
           entries.push({ updateFrom, description, amount, updatedAmount });
           updateTable();
-
           descriptionInput.value = '';
           amountInput.value = '';
         } catch (error) {
-          errorMessage.classList.remove('is-hidden');
+          showError(error instanceof Error ? error.message : 'Não foi possível calcular com a tabela disponível.');
         }
       });
+
+      async function loadFactors() {
+        if (!factorsPromise) {
+          factorsPromise = fetch('tabela_de_atualizacao_ec113.json')
+            .then((response) => {
+              if (!response.ok) throw new Error('Não foi possível carregar a tabela EC 113/2021.');
+              return response.json();
+            })
+            .then((payload) => {
+              if (!payload.Fator || typeof payload.Fator !== 'object') {
+                throw new Error('A tabela EC 113/2021 está em formato inesperado.');
+              }
+              return payload.Fator;
+            });
+        }
+        return factorsPromise;
+      }
+
+      async function fetchFactor(date) {
+        const month = date.slice(0, 7);
+        const factors = await loadFactors();
+        const factor = Number(factors[month]);
+        if (!Number.isFinite(factor)) {
+          throw new Error(`Não há fator disponível para ${month}.`);
+        }
+        return factor;
+      }
 
       function deleteEntry(index) {
         entries.splice(index, 1);
         updateTable();
       }
 
-      async function fetchFactor(date) {
-        // Placeholder for fetching data based on date.
-        // In a real-world application, this should make an asynchronous request.
-        return Promise.resolve(1.1);
+      function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('is-hidden');
+      }
+
+      function hideError() {
+        errorMessage.textContent = '';
+        errorMessage.classList.add('is-hidden');
       }
 
       function updateTable() {
         let totalAmount = 0;
         let totalUpdatedAmount = 0;
-        entriesTableBody.innerHTML = entries.map((entry, index) => {
-          totalAmount += entry.amount;
-          totalUpdatedAmount += entry.updatedAmount;
-          return `
-            <tr>
-              <td>${entry.updateFrom}</td>
-              <td>${entry.description}</td>
-              <td>${entry.amount.toFixed(2)}</td>
-              <td>${entry.updatedAmount.toFixed(2)}</td>
-              <td>
-                <button class="button is-danger" onclick="deleteEntry(${index})">Delete</button>
-              </td>
-            </tr>
-          `;
-        }).join('') + `
-          <tr>
-            <td colspan="2"><strong>Total</strong></td>
-            <td><strong>${totalAmount.toFixed(2)}</strong></td>
-            <td><strong>${totalUpdatedAmount.toFixed(2)}</strong></td>
-            <td></td>
-          </tr>
-        `;
-        totalAmountDisplay.textContent = totalAmount.toFixed(2);
-        totalUpdatedAmountDisplay.textContent = totalUpdatedAmount.toFixed(2);
-        emptyState.style.display = entries.length > 0 ? 'none' : 'table-row';
+        entriesTableBody.innerHTML = entries.length
+          ? entries.map((entry, index) => {
+              totalAmount += entry.amount;
+              totalUpdatedAmount += entry.updatedAmount;
+              return `
+                <tr>
+                  <td>${entry.updateFrom}</td>
+                  <td>${escapeHtml(entry.description)}</td>
+                  <td class="number">${currency.format(entry.amount)}</td>
+                  <td class="number">${currency.format(entry.updatedAmount)}</td>
+                  <td><button type="button" class="danger" data-delete-index="${index}">Excluir</button></td>
+                </tr>`;
+            }).join('')
+          : '<tr id="emptyState"><td colspan="5">Nenhum cálculo adicionado.</td></tr>';
+
+        totalAmountDisplay.textContent = currency.format(totalAmount);
+        totalUpdatedAmountDisplay.textContent = currency.format(totalUpdatedAmount);
+        entriesTableBody.querySelectorAll('[data-delete-index]').forEach((button) => {
+          button.addEventListener('click', () => deleteEntry(Number(button.dataset.deleteIndex)));
+        });
       }
 
-      window.deleteEntry = deleteEntry;
+      function escapeHtml(value) {
+        const element = document.createElement('span');
+        element.textContent = value;
+        return element.innerHTML;
+      }
     });
   </script>
 </body>
